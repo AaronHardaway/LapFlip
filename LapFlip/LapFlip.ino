@@ -24,39 +24,39 @@ int lapTens = 0;
 int lapOnes = 0;
 boolean isReset = false;
 
+//attempts to debounce button presses..
 volatile long lastDebounceTime = 0;   // the last time the interrupt was triggered
 long debounceDelay = 80;    // the debounce time; decrease if quick button presses are ignored
 
 //variable to hold reset lap
 int lapReset = 0;
 
-
 void setup() {
-	ADCSRA = 0; //disable ADC (analog to digital converter)
-
 	Serial.begin(115200);
 	Serial.println("Starting..");
 
-	//initialize outputs
-	for (int x = onesPin; x < onesPin + 7; x++) {
+	//initialize Ones digit outputs..
+	for (int x = onesPin; x < onesPin + 8; x++) {
 		pinMode(x, OUTPUT);
 	}
-	for (int x = tensPin; x < tensPin + 7; x++) {
+	//initialize Tens digit outputs..
+	for (int x = tensPin; x < tensPin + 8; x++) {
 		pinMode(x, OUTPUT);
 	}
-	pinMode(18, INPUT_PULLUP);
-	pinMode(19, INPUT_PULLUP);
-	pinMode(20, INPUT_PULLUP);
-	pinMode(21, INPUT_PULLUP);
-
+	//initialize interrupt inputs..
+	for (int x = 18; x < 22; x++){
+		pinMode(x, INPUT_PULLUP);
+	}
 }
 
 void loop() {
+	Serial.println("");
 	long currentTime = millis();
 	if ((currentTime - lastDebounceTime) > debounceDelay) {
 		lastDebounceTime = currentTime;
 		switch (state) {
 		case 0:
+			lap = 0;
 			break;
 		case 1:
 			if (isReset) {
@@ -82,134 +82,111 @@ void loop() {
 		Serial.println(lap);
 
 		if (lap > 9) {
-			displayDigit(tensPin, fiGetDigit(lap, 0));
-			displayDigit(onesPin, fiGetDigit(lap, 1));
+			displayDigit(tensPin, fiGetDigit(lap, 1), onesPin, fiGetDigit(lap, 0));
 			Serial.print("Display Lap: ");
 			Serial.print(fiGetDigit(lap, 1));
 			Serial.println(fiGetDigit(lap, 0));
 		}
 
 		if (lap < 10 && lap > 0) {
-			displayDigit(tensPin, -1);
-			displayDigit(onesPin, fiGetDigit(0, lap));
+			displayDigit(tensPin, -1, onesPin, fiGetDigit(0, lap));
 			Serial.print("Display Lap: ");
 			Serial.println(fiGetDigit(lap, 0));
 		}
 
 		if (lap < 1) {
-			displayDigit(tensPin, -1);
-			displayDigit(onesPin, -1);
+			displayDigit(tensPin, -1, onesPin, -1);
 			Serial.print("Display Lap: ");
 			Serial.println("");
 		}
-
 	}
 	sleepNow();
 }
 
-void displayDigit(int dpin, int n)  //dpin is starting pin for 7 segment ie "A", n is the number to display
+//send digits to display, dpin is starting pin for 7 segment ie "A", n1 is the tens digit to display, n2 is the ones digit to display
+void displayDigit(int dpin1, int dpin2, int n1, int n2)
 {
-	switch (n) {
+	switch (n1) {
 	case 0:
-		digitalWrite(dpin + 0, HIGH);
-		digitalWrite(dpin + 1, HIGH);
-		digitalWrite(dpin + 2, HIGH);
-		digitalWrite(dpin + 3, HIGH);
-		digitalWrite(dpin + 4, HIGH);
-		digitalWrite(dpin + 5, HIGH);
-		digitalWrite(dpin + 6, LOW);
+		displayBlank(dpin1);
 		break;
 	case 1:
-		digitalWrite(dpin + 0, LOW);
-		digitalWrite(dpin + 1, HIGH);
-		digitalWrite(dpin + 2, HIGH);
-		digitalWrite(dpin + 3, LOW);
-		digitalWrite(dpin + 4, LOW);
-		digitalWrite(dpin + 5, LOW);
-		digitalWrite(dpin + 6, LOW);
+		displayOne(dpin1);
 		break;
 	case 2:
-		digitalWrite(dpin + 0, HIGH);
-		digitalWrite(dpin + 1, HIGH);
-		digitalWrite(dpin + 2, LOW);
-		digitalWrite(dpin + 3, HIGH);
-		digitalWrite(dpin + 4, HIGH);
-		digitalWrite(dpin + 5, LOW);
-		digitalWrite(dpin + 6, HIGH);
+		displayTwo(dpin1);
 		break;
 	case 3:
-		digitalWrite(dpin + 0, HIGH);
-		digitalWrite(dpin + 1, HIGH);
-		digitalWrite(dpin + 2, HIGH);
-		digitalWrite(dpin + 3, HIGH);
-		digitalWrite(dpin + 4, LOW);
-		digitalWrite(dpin + 5, LOW);
-		digitalWrite(dpin + 6, HIGH);
+		displayThree(dpin1);
 		break;
 	case 4:
-		digitalWrite(dpin + 0, LOW);
-		digitalWrite(dpin + 1, HIGH);
-		digitalWrite(dpin + 2, HIGH);
-		digitalWrite(dpin + 3, LOW);
-		digitalWrite(dpin + 4, LOW);
-		digitalWrite(dpin + 5, HIGH);
-		digitalWrite(dpin + 6, HIGH);
+		displayFour(dpin1);
 		break;
 	case 5:
-		digitalWrite(dpin + 0, HIGH);
-		digitalWrite(dpin + 1, LOW);
-		digitalWrite(dpin + 2, HIGH);
-		digitalWrite(dpin + 3, HIGH);
-		digitalWrite(dpin + 4, LOW);
-		digitalWrite(dpin + 5, HIGH);
-		digitalWrite(dpin + 6, HIGH);
+		displayFive(dpin1);
 		break;
 	case 6:
-		digitalWrite(dpin + 0, HIGH);
-		digitalWrite(dpin + 1, LOW);
-		digitalWrite(dpin + 2, HIGH);
-		digitalWrite(dpin + 3, HIGH);
-		digitalWrite(dpin + 4, HIGH);
-		digitalWrite(dpin + 5, HIGH);
-		digitalWrite(dpin + 6, HIGH);
+		displaySix(dpin1);
 		break;
 	case 7:
-		digitalWrite(dpin + 0, HIGH);
-		digitalWrite(dpin + 1, HIGH);
-		digitalWrite(dpin + 2, HIGH);
-		digitalWrite(dpin + 3, LOW);
-		digitalWrite(dpin + 4, LOW);
-		digitalWrite(dpin + 5, LOW);
-		digitalWrite(dpin + 6, LOW);
+		displaySeven(dpin1);
 		break;
 	case 8:
-		digitalWrite(dpin + 0, HIGH);
-		digitalWrite(dpin + 1, HIGH);
-		digitalWrite(dpin + 2, HIGH);
-		digitalWrite(dpin + 3, HIGH);
-		digitalWrite(dpin + 4, HIGH);
-		digitalWrite(dpin + 5, HIGH);
-		digitalWrite(dpin + 6, HIGH);
+		displayEight(dpin1);
 		break;
 	case 9:
-		digitalWrite(dpin + 0, HIGH);
-		digitalWrite(dpin + 1, HIGH);
-		digitalWrite(dpin + 2, HIGH);
-		digitalWrite(dpin + 3, HIGH);
-		digitalWrite(dpin + 4, LOW);
-		digitalWrite(dpin + 5, HIGH);
-		digitalWrite(dpin + 6, HIGH);
+		displayNine(dpin1);
 		break;
 	default:
-		digitalWrite(dpin + 0, LOW);
-		digitalWrite(dpin + 1, LOW);
-		digitalWrite(dpin + 2, LOW);
-		digitalWrite(dpin + 3, LOW);
-		digitalWrite(dpin + 4, LOW);
-		digitalWrite(dpin + 5, LOW);
-		digitalWrite(dpin + 6, LOW);
+		displayBlank(dpin1);
 		break;
 	}
+
+	switch (n2) {
+	case 0:
+		displayZero(dpin2);
+		break;
+	case 1:
+		displayOne(dpin2);
+		break;
+	case 2:
+		displayTwo(dpin2);
+		break;
+	case 3:
+		displayThree(dpin2);
+		break;
+	case 4:
+		displayFour(dpin2);
+		break;
+	case 5:
+		displayFive(dpin2);
+		break;
+	case 6:
+		displaySix(dpin2);
+		break;
+	case 7:
+		displaySeven(dpin2);
+		break;
+	case 8:
+		displayEight(dpin2);
+		break;
+	case 9:
+		displayNine(dpin2);
+		break;
+	default:
+		displayBlank(dpin2);
+		break;
+	}
+	delay(20);
+	digitalWrite(dpin1 + 7, HIGH);
+	digitalWrite(dpin2 + 7, HIGH);
+	delay(200);
+	digitalWrite(dpin1 + 7, LOW);
+	digitalWrite(dpin2 + 7, LOW);
+	delay(20);
+	displayBlank(dpin1);
+	displayBlank(dpin2);
+	delay(20);
 }
 
 void sleepNow()
@@ -276,4 +253,125 @@ int fiGetDigit(int n, int k)
 	case 9:return n / 1000000000 % 10;
 	}
 	return 0;
+}
+
+void displayZero(int dpin)
+{
+	digitalWrite(dpin + 0, HIGH);
+	digitalWrite(dpin + 1, HIGH);
+	digitalWrite(dpin + 2, HIGH);
+	digitalWrite(dpin + 3, HIGH);
+	digitalWrite(dpin + 4, HIGH);
+	digitalWrite(dpin + 5, HIGH);
+	digitalWrite(dpin + 6, LOW);
+}
+
+void displayOne(int dpin)
+{
+	digitalWrite(dpin + 0, LOW);
+	digitalWrite(dpin + 1, HIGH);
+	digitalWrite(dpin + 2, HIGH);
+	digitalWrite(dpin + 3, LOW);
+	digitalWrite(dpin + 4, LOW);
+	digitalWrite(dpin + 5, LOW);
+	digitalWrite(dpin + 6, LOW);
+}
+
+void displayTwo(int dpin)
+{
+	digitalWrite(dpin + 0, HIGH);
+	digitalWrite(dpin + 1, HIGH);
+	digitalWrite(dpin + 2, LOW);
+	digitalWrite(dpin + 3, HIGH);
+	digitalWrite(dpin + 4, HIGH);
+	digitalWrite(dpin + 5, LOW);
+	digitalWrite(dpin + 6, HIGH);
+}
+
+void displayThree(int dpin)
+{
+	digitalWrite(dpin + 0, HIGH);
+	digitalWrite(dpin + 1, HIGH);
+	digitalWrite(dpin + 2, HIGH);
+	digitalWrite(dpin + 3, HIGH);
+	digitalWrite(dpin + 4, LOW);
+	digitalWrite(dpin + 5, LOW);
+	digitalWrite(dpin + 6, HIGH);
+}
+
+void displayFour(int dpin)
+{
+	digitalWrite(dpin + 0, LOW);
+	digitalWrite(dpin + 1, HIGH);
+	digitalWrite(dpin + 2, HIGH);
+	digitalWrite(dpin + 3, LOW);
+	digitalWrite(dpin + 4, LOW);
+	digitalWrite(dpin + 5, HIGH);
+	digitalWrite(dpin + 6, HIGH);
+}
+
+void displayFive(int dpin)
+{
+	digitalWrite(dpin + 0, HIGH);
+	digitalWrite(dpin + 1, LOW);
+	digitalWrite(dpin + 2, HIGH);
+	digitalWrite(dpin + 3, HIGH);
+	digitalWrite(dpin + 4, LOW);
+	digitalWrite(dpin + 5, HIGH);
+	digitalWrite(dpin + 6, HIGH);
+}
+
+void displaySix(int dpin)
+{
+	digitalWrite(dpin + 0, HIGH);
+	digitalWrite(dpin + 1, LOW);
+	digitalWrite(dpin + 2, HIGH);
+	digitalWrite(dpin + 3, HIGH);
+	digitalWrite(dpin + 4, HIGH);
+	digitalWrite(dpin + 5, HIGH);
+	digitalWrite(dpin + 6, HIGH);
+}
+
+void displaySeven(int dpin)
+{
+	digitalWrite(dpin + 0, HIGH);
+	digitalWrite(dpin + 1, HIGH);
+	digitalWrite(dpin + 2, HIGH);
+	digitalWrite(dpin + 3, LOW);
+	digitalWrite(dpin + 4, LOW);
+	digitalWrite(dpin + 5, LOW);
+	digitalWrite(dpin + 6, LOW);
+}
+
+void displayEight(int dpin)
+{
+	digitalWrite(dpin + 0, HIGH);
+	digitalWrite(dpin + 1, HIGH);
+	digitalWrite(dpin + 2, HIGH);
+	digitalWrite(dpin + 3, HIGH);
+	digitalWrite(dpin + 4, HIGH);
+	digitalWrite(dpin + 5, HIGH);
+	digitalWrite(dpin + 6, HIGH);
+}
+
+void displayNine(int dpin)
+{
+	digitalWrite(dpin + 0, HIGH);
+	digitalWrite(dpin + 1, HIGH);
+	digitalWrite(dpin + 2, HIGH);
+	digitalWrite(dpin + 3, HIGH);
+	digitalWrite(dpin + 4, LOW);
+	digitalWrite(dpin + 5, HIGH);
+	digitalWrite(dpin + 6, HIGH);
+}
+
+void displayBlank(int dpin)
+{
+	digitalWrite(dpin + 0, LOW);
+	digitalWrite(dpin + 1, LOW);
+	digitalWrite(dpin + 2, LOW);
+	digitalWrite(dpin + 3, LOW);
+	digitalWrite(dpin + 4, LOW);
+	digitalWrite(dpin + 5, LOW);
+	digitalWrite(dpin + 6, LOW);
 }
